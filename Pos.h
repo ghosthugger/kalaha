@@ -21,7 +21,7 @@ public:
 	int MovingSideKalaha();
 	int OppositePit(int i);
 	int NoOfBallsInPit(int i);
-	int Value(int nLevels, bool bMaxLevel);
+	int Value(int nLevels, bool bMaxLevel, int nAlfa, int nBeta);
 	int Value();
 	void DistributePit(int nPit);
 	Move FindMove(int nLevels);

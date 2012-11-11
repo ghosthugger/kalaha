@@ -44,7 +44,7 @@ void Game::Play()
 
 	int nDifficulty = 0;
 	while(nDifficulty > 7
-			|| nDifficulty < 1)
+			|| nDifficulty < 2)
 	{
 		std::cout << std::endl << "Enter difficulty level (2-7) (2=very easy) (7=to hard):";
 		cin >> nDifficulty;

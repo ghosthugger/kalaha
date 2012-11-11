@@ -4,6 +4,7 @@
 
 
 #include <sstream>
+#include <cassert>
 
 #include "Pos.h"
 
@@ -33,11 +34,14 @@ Move Pos::FindMove(int nLevels)
 	int nBestSoFar = 0;
 	Move BestSoFar;
 	bool bFirst = true;
+	int nNewBeta = 10000;
 	std::shared_ptr<MoveIter> iter = PossibleMoves();
 	while(iter->HasMore())
 	{
 		Pos branch = (**iter).Perform(*this);
-		int nBranchValue = branch.Value(nLevels-1, true);
+		int nBranchValue = branch.Value(nLevels-1, true, -10000, nNewBeta);
+		if(nBranchValue < nNewBeta)  // this is always min level!
+			nNewBeta = nBranchValue;
 
 		if(bFirst
 			|| nBestSoFar > nBranchValue)
@@ -54,15 +58,16 @@ Move Pos::FindMove(int nLevels)
 
 void Pos::DistributePit(int nPit)
 {
-//	ASSERT(m_pits[nPit] != 0); // cannot move empty pit
 
-/*	ASSERT((m_bPlayersTurn
+	assert(m_pits[nPit] != 0); //cannot move empty pit
+
+	assert((m_bPlayersTurn
 			  && nPit <= 5
 			  && nPit >= 0)
 			  || (!m_bPlayersTurn
 				   && nPit <= 12
 					&& nPit >= 7)); // wrong player!
-					*/
+
 
 	int nBalls = m_pits[nPit];
 	m_pits[nPit] = 0;
@@ -126,7 +131,7 @@ int Pos::Value()
 	return m_pits[6] - m_pits[13];
 }
 
-int Pos::Value(int nLevels, bool bMaxLevel)
+int Pos::Value(int nLevels, bool bMaxLevel, int nAlfa, int nBeta)
 {
 	if(nLevels == 1)
 	{
@@ -134,10 +139,29 @@ int Pos::Value(int nLevels, bool bMaxLevel)
 	}
 	int nBestSoFar = 0;
 	std::shared_ptr<MoveIter> iter = PossibleMoves();
+	int nNewAlfa = nAlfa;
+	int nNewBeta = nBeta;
 	bool bFirst = true;
 	while(iter->HasMore())
 	{
-		int nBranchValue = (**iter).Perform(*this).Value(nLevels-1, !bMaxLevel);
+		int nBranchValue = (**iter).Perform(*this).Value(nLevels-1, !bMaxLevel, nNewAlfa, nNewBeta);
+
+		if(bMaxLevel
+			&& nBranchValue > nNewAlfa)
+			nNewAlfa = nBranchValue;
+
+		if(!bMaxLevel
+			&& nBranchValue < nNewBeta)
+			nNewBeta = nBranchValue;
+
+		if(bMaxLevel
+			&& nBranchValue > nBeta)
+			return nBranchValue;
+
+		if(!bMaxLevel
+			&& nBranchValue < nAlfa)
+			return nBranchValue;
+
 		if(bFirst
 			|| (bMaxLevel
 				 && nBranchValue > nBestSoFar)
